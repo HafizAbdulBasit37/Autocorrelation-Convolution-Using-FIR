@@ -27,7 +27,7 @@ A sample delay `DELAY` is applied on the **signal path** as `shift_reg[j + DELAY
 1. **Convolution vs Correlation Confusion**  
    - *Problem:* Using `shift_reg[j] * coeff_mem[j]` with newest-at-0 indexing was assumed to be correlation.  
    - *Resolution:* It is **convolution** unless coefficients are reversed. Correlation requires `coeff_mem[N-1-j]` (or reversed storage).
-
+   - *Note:* in Our case we not flipped the coefficents beacuse our shift regiter which work as delay line also flip the incoming signal. Due to which we obtained correlation Output not Convolution. If we use register in order newest sample on last buffer and oldest sample on first buffer then we will obtained convolution output
 2. **Accumulator Not Cleared**  
    - *Problem:* `acc` not reset each cycle produced growing sums.  
    - *Resolution:* Set `acc = 0;` (blocking) before the MAC loop inside the sequential block.
