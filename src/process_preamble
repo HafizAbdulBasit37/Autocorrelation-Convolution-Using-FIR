@@ -1,0 +1,42 @@
+% process_preamble.m
+% Load sim/bin.mem (two-bit symbols) and map to QPSK then compute conv & xcorr
+
+
+% Read file (each line contains 2 bits e.g. '00')
+lines = readlines('sim/bin.mem');
+N = numel(lines);
+symbols = zeros(1,N);
+for k=1:N
+s = strtrim(lines(k));
+symbols(k) = bin2dec(s);
+end
+
+
+% map symbols to QPSK amplitude (example)
+A = 1;
+I = zeros(1,N); Q = zeros(1,N);
+for k=1:N
+switch symbols(k)
+case 0
+I(k) = -A; Q(k) = -A;
+case 1
+I(k) = -A; Q(k) = A;
+case 2
+I(k) = A; Q(k) = -A;
+case 3
+I(k) = A; Q(k) = A;
+end
+end
+
+
+preamble_len = 512; % as you requested
+preambleI = I(1:preamble_len);
+restI = I(preamble_len+1:end);
+
+
+y_conv = conv(restI, preambleI);
+y_corr = xcorr(restI, preambleI);
+
+
+figure; subplot(2,1,1); plot(y_conv); title('Convolution');
+subplot(2,1,2); plot(y_corr); title('Correlation (xcorr)');
