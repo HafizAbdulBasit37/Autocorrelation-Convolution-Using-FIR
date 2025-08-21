@@ -26,7 +26,7 @@ A sample delay `DELAY` is applied on the **signal path** as `shift_reg[j + DELAY
 
 1. **Convolution vs Correlation Confusion**  
    - *Problem:* Using `shift_reg[j] * coeff_mem[j]` with newest-at-0 indexing was assumed to be correlation.  
-   - *Resolution:* It is **convolution** unless coefficients are reversed. Correlation requires `coeff_mem[N-1-j]` (or reversed storage).
+   - *Resolution:* Normally this is convolution, but in our design the shift-register direction effectively flipped the signal, so the same formula produced correlation output.
    - *Note:* in Our case we not flipped the coefficents beacuse our shift regiter which work as delay line also flip the incoming signal. Due to which we obtained correlation Output not Convolution. If we use register in order newest sample on last buffer and oldest sample on first buffer then we will obtained convolution output
 2. **Accumulator Not Cleared**  
    - *Problem:* `acc` not reset each cycle produced growing sums.  
@@ -36,11 +36,8 @@ A sample delay `DELAY` is applied on the **signal path** as `shift_reg[j + DELAY
    - *Problem:* A stray `end` after the loader caused compile errors.  
    - *Resolution:* Remove the extra `end`. Ensure blocks are properly nested.
 
-4. **Signed Multiply & Bit Growth**  
-   - *Problem:* Potential sign/width mismatch in `*` and accumulation.  
-   - *Resolution:* Use `$signed(...)` on operands and a 2× width accumulator.
 
-5. **Where to Apply Delay**  
+4. **Where to Apply Delay**  
    - *Problem:* DELAY mistakenly considered on coefficient index.  
    - *Resolution:* Delay belongs on the **signal path**: use `shift_reg[j + DELAY]`.
 
