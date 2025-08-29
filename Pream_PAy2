@@ -1,0 +1,98 @@
+`timescale 1ns / 1ps
+
+module IandQs #(
+    parameter signed A = 16384,           // Amplitude
+    parameter SAMPLES_PER_BIT = 16,       // Upsampling factor
+    parameter PREAMBLE_LEN = 16,          // Preamble bits length (per I/Q)
+    parameter PAYLOAD_BITS = 12,          // Payload bits length (SEQ1/SEQ2)
+    parameter REPEAT_TIMES = 10           // Payload repetitions
+)(
+    input  wire             clk,
+    input  wire             rst,
+    output reg signed [15:0] I_out,
+    output reg signed [15:0] Q_out,
+    output reg             done
+);
+
+    // Memory: 100 entries of 2-bit symbols (0..99)
+    reg [1:0] temp_mem [0:1054];
+    reg [10:0] counter;
+    reg [1:0] symbol;
+
+    initial begin
+        $readmemb("bin.mem", temp_mem);
+    end
+
+    // Counter update (0..99)
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            counter <= 0;
+            done    <= 1'b0;
+        end else begin
+            if (counter <1055) begin
+                counter <= counter + 1;
+                done    <= 1'b0;
+            end else begin
+                counter <= 0;
+                done    <= 1'b1; // pulse done when sequence wraps (one cycle)
+            end
+        end
+    end
+
+    // QPSK mapping
+always @(*) begin
+    // Take only last two bits
+    symbol = temp_mem[counter][1:0];  
+    
+    if (counter < 64) begin
+        case (symbol)
+            2'b00: begin 
+                I_out = -A; 
+                Q_out = -A; 
+            end
+            2'b01: begin 
+                I_out = -A; 
+                Q_out = A; 
+            end
+            2'b10: begin 
+                I_out = A; 
+                Q_out = -A; 
+            end
+            2'b11: begin 
+                I_out = A; 
+                Q_out = A; 
+            end
+            default: begin
+                I_out = 0;
+                Q_out = 0;
+            end 
+        endcase
+    end 
+    else begin
+        case (symbol)
+            2'b00: begin 
+                I_out = -A; 
+                Q_out = -A; 
+            end
+            2'b01: begin 
+                I_out = -A; 
+                Q_out = A; 
+            end
+            2'b10: begin 
+                I_out = A; 
+                Q_out = -A; 
+            end
+            2'b11: begin 
+                I_out = A; 
+                Q_out = A; 
+            end
+            default: begin
+                I_out = 0;
+                Q_out = 0;
+            end
+        endcase
+    end
+end
+
+
+endmodule
